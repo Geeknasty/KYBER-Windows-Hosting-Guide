@@ -1,0 +1,41 @@
+services:
+  kyber-server:
+    image: ghcr.io/armchairdevelopers/kyber-server:latest
+    container_name: kyber-test-server
+    env_file:
+      - secrets.env
+    network_mode: "host"
+    privileged: true
+    command: ["--module-branch=ver/beta10", "--module-path=/root/.local/share/kyber/module"]
+    environment:
+      - KYBER_SERVER_NAME=${SERVER_NAME:-}
+      - KYBER_SERVER_PASSWORD=${SERVER_PASSWORD:-}
+      - KYBER_SERVER_MAX_PLAYERS=${SERVER_MAX_PLAYERS:-}
+      - KYBER_MAP_ROTATION=${SERVER_MAP_ROTATION:-}
+      - KYBER_SERVER_DESCRIPTION=${SERVER_DESCRIPTION:-}
+      - KYBER_MODULE_CHANNEL=ver/beta10
+      - KYBER_LOG_LEVEL=info
+      # Short-form variables: Only passed to container if defined in .env
+      - KYBER_MOD_FOLDER
+      - KYBER_SERVER_PLUGINS_PATH
+    volumes:
+      - swbf2_data:/mnt/battlefront
+      - kyber_mods:/mnt/battlefront/mods
+      - kyber_plugins:/mnt/plugins
+      # Mounting ver/10 Kyber.dll
+      - kyber_module_ver10:/root/.local/share/kyber/module/
+      # Mount the server logs (will output in same direcory as docker-compose.yml /Logs/)
+      - ./logs:/root/.local/share/maxima/wine/prefix/drive_c/users/root/AppData/Roaming/ArmchairDevelopers/Kyber/Logs/
+    restart: unless-stopped
+
+volumes:
+  swbf2_data:
+    external: true
+  kyber_module_ver10:
+    external: true
+  kyber_mods:
+    external: true
+    name: ${MOD_VOLUME:-empty_data}
+  kyber_plugins:
+    external: true
+    name: ${PLUGIN_VOLUME:-empty_data}

@@ -1,0 +1,14 @@
+secrets.env
+*.env
+!*.env.example
+logs/
+*.log
+*.tmp
+docker-compose.override.yml 
+.git/
+.vscode/
+.idea/
+.DS_Store  # Mac-specific
+*.pem
+*.key
+*.crt
