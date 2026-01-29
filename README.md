@@ -263,7 +263,7 @@ SERVER_MAP_ROTATION='<base64_encoded_JSON_array_of_maps>'
 #Pick which Mods and Plugins you want 
 MOD_VOLUME=swbf2_mods_hvv_chaos
 PLUGIN_VOLUME=swbf2_plugins_hvvplayground
-# You can copy the 2 ENV Variables below into all .env.<gamemode> that use mods and plugins
+# You can copy the 2 ENV Variables below into all <gamemode>.env that use mods and plugins
 KYBER_MOD_FOLDER=/mnt/battlefront/mods
 KYBER_SERVER_PLUGINS_PATH=/mnt/plugins
 ```
