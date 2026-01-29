@@ -4,7 +4,7 @@ Host community servers for **STAR WARS Battlefront II (2017)** using KYBER with 
 
 [![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Windows](https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
-[![KYBER](https://img.shields.io/badge/KYBER-Community%20Discord%20Server-%23f2ae09?logo=star-wars&logoColor=black)](https://kyber.gg/)
+[![KYBER](https://img.shields.io/badge/KYBER-Main%20Page-%23f2ae09?logo=star-wars&logoColor=black)](https://kyber.gg/)
 
 **Quick Links:**
 - [Full Guide](#guide-hosting-kyber-dedicated-servers-on-windows-docker--kyber) (below)
@@ -91,7 +91,7 @@ kyber_cli download_game -p C:\Path\To\Your\GameFolder -t <your_ea_token>
 
 **Alternative: Reuse your existing Battlefront II installation** (Recommended if already downloaded the game and it's unmodified)
 
-If you have Star Wars Battlefront II installed locally (Steam, EA App/Origin, etc.), you can copy directly from there instead of downloading ~90 GB again. However, any modifications to the game files may negativly effect server hosting. If you're unsure it may be better to download a fresh copy.
+If you already have Star Wars Battlefront II installed locally (Steam, EA App/Origin, etc.), you can copy directly from there instead of downloading ~90 GB again. However, any modifications to the game files may negativly effect server hosting. If you're unsure it may be better to download a fresh copy.
 
 1. Locate your game install folder:
    - Steam: Right-click game in library → Manage → Browse local files
@@ -184,7 +184,7 @@ Follow this pattern for all external assets to ensure maximum performance and ze
 To deploy the server we will use docker-compose. This will require a `docker-compose.yml` and a few `.env` files. We will use the `docker-compose.yml` as a reusable template, `secrets.env` to store tokens, and `<ServerName>.env` to store individual server settings and environment variables. See the [Dedicated-Server Config Docs](https://docs.kyber.gg/g/hosting/dedicated-servers/config) for a list of environment variables.
 
 ### A. docker-compose.yml file
- * Create a file named `docker-compose.yml` in your project directory. It acts as a universal template. This file will be what we use to start the server. Server logs will be output in the same directory as this file.
+ * Create a file named `docker-compose.yml` in your project directory. It acts as a universal template. This file is used to start the server. Server logs will be output in the same directory as this file.
 ```yaml
 services:
   kyber-server:
