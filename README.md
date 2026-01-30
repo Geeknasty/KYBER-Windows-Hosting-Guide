@@ -41,6 +41,8 @@ This guide allows you to host a Kyber V2 dedicated server on Windows using Docke
 * Enable **WSL** and **Virtual Machine Platform** via PowerShell (Admin):
     ```powershell
     dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+    ```
+    ```powershell
     dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
     ```
 * Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/#install-docker-desktop-on-windows) and ensure it is set to use the **WSL 2 engine**.
@@ -66,7 +68,7 @@ By default, Docker Desktop stores its virtual disk (where volumes live) on your 
 ### 3. Obtain Kyber Credentials
 * Download the **Kyber CLI** from the [Kyber Prerequisites Docs](https://docs.kyber.gg/g/hosting/dedicated-servers/prereq).
 * Run the following to link your accounts and generate tokens:
-    * `kyber_cli get_token` (For your Kyber Identity)
+    * `kyber_cli get_token` (Save this token. This will be used later as KYBER_TOKEN)
     * `kyber_cli get_ea_token` (To verify game ownership)
 
 >__IMPORTANT:__ : If your EA password contains special characters it may not work. It may be a good idea to change your password to UPPERCASE, lowercase, and numbers.
@@ -117,9 +119,15 @@ This happens because NTFS (Windows' filesystem) doesn't fully support the Linux-
     ```bash
     docker volume create swbf2_data
     docker volume create empty_data
-    # Create mod/plugin volumes as needed
-    docker volume create kyber_module_ver10 #example volume for beta ver/10 kyber-module
-    docker volume create swbf2_mods_hvv_chaos #example volume for hvv chaos mods
+    # Example volume for beta ver/10 kyber-module
+    docker volume create kyber_module_ver10 
+    ```
+    ```bash
+    # Create mod/plugin volumes as needed:
+    # Example volume for hvv chaos mods
+    docker volume create swbf2_mods_hvv_chaos 
+    # Example volume for hvvplayground plugin
+    docker volume create swbf2_plugin_hvvplayground
     ```
 2.  **Ingest the Game files, Plugins, and Kyber Module:**
     ```bash
@@ -144,12 +152,16 @@ This happens because NTFS (Windows' filesystem) doesn't fully support the Linux-
 ## Step 3: Preparing Mods, Plugins, and Modules
 Follow this pattern for all external assets to ensure maximum performance and zero permission errors.
 
-<img src="assets/kyber_export_mods.png" align="right" width="250" alt="Settings">
+
 
 ### a. Mods
 * In the Kyber Launcher: **Options -> Export Collection TAR**.
 * Create a volume (e.g., `swbf2_mods_hvv_chaos`) and ingest the `.tar` contents into it using the "Ingest the Mod files:" `docker run tar` method found in Step 2.
+  <details>
+  <summary>📸 <b>VIEW SCREENSHOT:</b> How to export mod collection (Click to expand)</summary>
 
+  <img src="assets/kyber_export_mods.png" width="400" alt="Kyber Launcher mod collection export">
+  </details>
 
 
 ### b. Plugins
@@ -158,8 +170,11 @@ Follow this pattern for all external assets to ensure maximum performance and ze
 * Rename the file extension from `.zip` to `.kbplugin`.
 * Ensure the filename matches the plugin name (e.g., `HVVPlayground.kbplugin`) for consistent loading.
 * Move this into a volume (e.g., `swbf2_plugins_hvvplayground`) using the same `docker run` method used in Step 2.
+  <details>
+  <summary>📸 <b>VIEW SCREENSHOT:</b> How to zip and rename plugins (Click to expand)</summary>
 
-<img src="assets/kyber-module_setting.png" align="right" width="300" alt="Settings">
+  <img src="assets/zip_rename_kbplugins.png" width="1200" alt="kbplugin format">
+  </details>
 
 ### c. Kyber Module (`Kyber.dll`)
 * In Kyber Launcher: **Settings -> Accounts & Updates**.
@@ -167,7 +182,11 @@ Follow this pattern for all external assets to ensure maximum performance and ze
 * Join any server to trigger the update.
 * Locate the files at `C:\ProgramData\Kyber\Module\`.
 * Move this into a volume (e.g., `kyber_module_ver10`) using the same `docker run` method used in Step 2.
+  <details>
+  <summary>📸 <b>VIEW SCREENSHOT:</b> Kyber Launcher Release Channel (Click to expand)</summary>
 
+  <img src="assets/kyber-module_setting.png" width="1200" alt="kbplugin format">
+  </details>
 
 ---
 <br><br>
@@ -189,7 +208,7 @@ To deploy the server we will use docker-compose. This will require a `docker-com
 services:
   kyber-server:
     image: ghcr.io/armchairdevelopers/kyber-server:latest
-    container_name: kyber-test-server
+    container_name: ${CONTAINER_NAME:-kyber_server}
     env_file:
       - secrets.env
     network_mode: "host"
@@ -213,7 +232,7 @@ services:
       # Mounting ver/10 Kyber.dll
       - kyber_module_ver10:/root/.local/share/kyber/module/
       # Mount the server logs (will output in same directory as docker-compose.yml /Logs/)
-      - ./logs:/root/.local/share/maxima/wine/prefix/drive_c/users/root/AppData/Roaming/ArmchairDevelopers/Kyber/Logs/
+      - ./logs/${CONTAINER_NAME}:/root/.local/share/maxima/wine/prefix/drive_c/users/root/AppData/Roaming/ArmchairDevelopers/Kyber/Logs/
     restart: unless-stopped
 
 volumes:
@@ -242,7 +261,8 @@ MAXIMA_CREDENTIALS='EAusername:password'
 
 * Now in the same directory as your `docker-compose.yml` we can create files for individual servers or gamemodes named `<ServerName>.env` (e.g., `hvvchaos.env`, `hvv6v6.env`, `coopBFPlusXL.env`. etc) This keeps your different game mode settings organized. 
 <details>
-<summary>🚨 <strong>CLICK HERE: How to get your base64 map rotation string</strong> (includes screenshot) 🚨</summary>
+
+<summary>📸 <b>VIEW SCREENSHOT:</b> How to get your base64 map rotation string (Click to expand) 🚨</summary>
 
 <img src="assets/Kyber_export_map_rotation.png" width="720" alt="Kyber Launcher map rotation base64 tool">
 
@@ -256,6 +276,8 @@ MAXIMA_CREDENTIALS='EAusername:password'
 ```yml
 # hvvchaos.env
 # Server Settings
+COMPOSE_PROJECT_NAME=hvvchaos
+CONTAINER_NAME=hvvchaos_server
 SERVER_NAME='HVV Chaos Playground'
 SERVER_MAX_PLAYERS=40
 SERVER_DESCRIPTION='(Optional) A longer UTF-8 description (≤256 characters) for server rules or links.'
@@ -271,6 +293,8 @@ KYBER_SERVER_PLUGINS_PATH=/mnt/plugins
 ```yml
 # vanillahvv.env
 # Server Settings
+COMPOSE_PROJECT_NAME=vanillahvv
+CONTAINER_NAME=vanillahvv_server
 SERVER_NAME='No Mods Server'
 SERVER_MAX_PLAYERS=12
 SERVER_DESCRIPTION='Vanilla HvV Map Rotation Test Server'
@@ -289,7 +313,11 @@ PLUGIN_VOLUME=empty_data
 docker-compose --env-file hvvchaos.env up -d
 ```
 >__Note:__ Use `-d` for detached (background) mode. Watch logs with `docker compose logs -f` or check on the running containers in docker-desktop.
+  <details>
+  <summary>📸 <b>VIEW SCREENSHOT:</b> Launching and Logs (Click to expand)</summary>
 
+  <img src="assets/deploying_logs.png" width="1200" alt="kbplugin format">
+  </details>
 <br><br><br>
 - Use the `.example` files as templates only.
 - Copy them to remove the `.example` suffix (e.g., `cp secrets.env.example secrets.env`).

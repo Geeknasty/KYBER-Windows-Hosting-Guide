@@ -1,7 +1,7 @@
 services:
   kyber-server:
     image: ghcr.io/armchairdevelopers/kyber-server:latest
-    container_name: kyber-test-server
+    container_name: ${CONTAINER_NAME:-kyber_server}
     env_file:
       - secrets.env
     network_mode: "host"
@@ -25,7 +25,7 @@ services:
       # Mounting ver/10 Kyber.dll
       - kyber_module_ver10:/root/.local/share/kyber/module/
       # Mount the server logs (will output in same direcory as docker-compose.yml /Logs/)
-      - ./logs:/root/.local/share/maxima/wine/prefix/drive_c/users/root/AppData/Roaming/ArmchairDevelopers/Kyber/Logs/
+      - ./logs/${CONTAINER_NAME}:/root/.local/share/maxima/wine/prefix/drive_c/users/root/AppData/Roaming/ArmchairDevelopers/Kyber/Logs/
     restart: unless-stopped
 
 volumes:
