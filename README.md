@@ -93,7 +93,7 @@ Download the game files using the Kyber_CLI.
 1.  Run the download:
 
 ```bash
-kyber_cli download_game -p C:\Path\To\Your\GameFolder -t <your_ea_token>
+kyber_cli download_game -p "C:\Path\To\Game" -t <your_ea_token>
 ```
 2.  Once the progress reaches 100%, you can cancel the process.
 
@@ -110,18 +110,32 @@ If you already have Star Wars Battlefront II installed locally (Steam, EA App/Or
    - `C:\Program Files (x86)\Steam\steamapps\common\STAR WARS Battlefront II`
    - `C:\Program Files\EA Games\STAR WARS Battlefront II`
 
-2. When using ingest command from Step 2, but point `/source` to your game folder:
 
-   (e.g., `-v "C:\Program Files (x86)\Steam\steamapps\common\STAR WARS Battlefront II:/source" -v swbf2_data:/dest`).
 ---
 <br><br>
-## Step 2: Create Linux-Native Docker Volumes
-**Important Warning:**  
-Directly mounting a Windows folder (e.g. via `-v "C:\GameFolder:/mnt/battlefront"`) into the Docker container will almost always cause **Activation64.dll** errors.  
+## Step 2: Ingest Game Files, Mods, & Plugins
 
-This happens because NTFS (Windows' filesystem) doesn't fully support the Linux-style file execution permissions that the server needs for certain game DLLs.
+**The Challenge:** Directly mounting Windows folders into Docker causes **Activation64.dll** errors due to NTFS permission limitations.
+**The Solution:** We must move all game files into native Linux Docker Volumes.
 
-**Required fix:** Copy (or extract) all files into a Docker volume created inside the Linux filesystem.
+### Option A: Use the KYBER Asset Importer (Recommended)
+
+1. **Download the Script:** Save `import-assets-v1.ps1` to your project folder.
+1. **Run it:** Right-click the file and select **Run with PowerShell**.
+1. **Follow the Prompts:**
+
+    - Select **Option 4** to import your Game Files first.
+    - Select **Option 1** for your Mod `.tar` files.
+    - Select **Option 2** for your `.kbplugin` files.
+
+**💡 Note:** The script will list your existing volumes. If you type a name that doesn't exist yet (e.g., `swbf2_data`), the script will automatically create it for you.
+
+<img src="assets/import-assets.png" width="720" alt="kbplugin format">
+
+### Option B: Manual Ingestion (Advanced)
+If you prefer using the CLI manually, follow these steps:
+<details>
+<summary>🔍<code> Manual Docker Commands</code>(Click to expand)</summary>
 
 1.  **Create the volumes:**
     ```bash
@@ -137,9 +151,9 @@ This happens because NTFS (Windows' filesystem) doesn't fully support the Linux-
     # Example volume for hvvplayground plugin
     docker volume create swbf2_plugin_hvvplayground
     ```
-2.  **Ingest the Game files, Plugins, and Kyber Module:**
+2.  **Ingest via Rsync (Game files, Plugins, and Kyber Module):**
     ```bash
-    docker run --rm -v "C:\Path\To\Your\GameFolder:/source" -v swbf2_data:/dest alpine sh -c "apk add --no-cache rsync && rsync -ah --info=progress2 --no-inc-recursive /source/ /dest/"
+    docker run --rm -v "C:\Path\To\Game:/source" -v swbf2_data:/dest alpine sh -c "apk add --no-cache rsync && rsync -ah --info=progress2 /source/ /dest/"
     ```
 
     >__Note:__ This may take some time to finish. Depending on the size of data.
@@ -148,28 +162,32 @@ This happens because NTFS (Windows' filesystem) doesn't fully support the Linux-
     * Plugin .kbplugin files (place them in a folder, ingest the folder)
     * Kyber Module folder (e.g, `"-v C:\ProgramData\Kyber\Module:/source"`) -> (e.g, `-v kyber_module_ver10:/dest`)
 
-3.  **Ingest the Mod files:** (See Step 3a Preparing Mods)
+3.  **Ingest via Tar (Mods):**
     ```bash
     docker run --rm -v "C:\Path\To\Your\ExportedMods\HVV_CHAOS_MODS.tar:/archive.tar" -v swbf2_mods_hvv_chaos:/dest alpine sh -c "tar -xf /archive.tar -C /dest"
     ```
     >__Note:__ This command is different because we need to extract the modcollection.tar into our docker volume.
-  #### We reuse this section several times. Creating Docker Volumes and ingesting files.
-
+  
+</details>
 ---
 <br><br>
+
 ## Step 3: Preparing Mods, Plugins, and Modules
-Follow this pattern for all external assets to ensure maximum performance and zero permission errors.
+
+To ingest the game files into our docker volume we just need to select **Option 4** in the **Importer Script** (then wait for the ~90GB to copy). However, for Mods, Plugins, and Modules. Some extra steps required:
 
 
 
 ### a. Mods
 * In the Kyber Launcher: **Options -> Export Collection TAR**.
-* Create a volume (e.g., `swbf2_mods_hvv_chaos`) and ingest the `.tar` contents into it using the "Ingest the Mod files:" `docker run tar` method found in Step 2.
-<details>
-<summary>📸 <b>VIEW SCREENSHOT:</b> <code>How to export mod collection</code> (Click to expand)</summary>
+  <details>
+  <summary>📸 <b>VIEW SCREENSHOT:</b> <code>How to export mod collection</code> (Click to expand)</summary>
 
-<img src="assets/kyber_export_mods.png" width="400" alt="Kyber Launcher mod collection export">
-</details>
+  <img src="assets/kyber_export_mods.png" width="400" alt="Kyber Launcher mod collection export">
+  </details>
+* **Run the Importer Script**, select **Option 1**, and drag the `modcollection.tar` file into the window and press enter.
+* Target a volume (e.g., `swbf2_mods_hvvchaos`).
+
 
 
 ### b. Plugins
@@ -177,25 +195,29 @@ Follow this pattern for all external assets to ensure maximum performance and ze
 * Zip your chosen plugin (ensure `.json` is at the root).
 * Rename the file extension from `.zip` to `.kbplugin`.
 * Ensure the filename matches the plugin name (e.g., `HVVPlayground.kbplugin`) for consistent loading.
-* Move this into a volume (e.g., `swbf2_plugins_hvvplayground`) using the same `docker run` method used in Step 2.
-<details>
-<summary>📸 <b>VIEW SCREENSHOT:</b> <code>How to zip and rename plugins</code> (Click to expand)</summary>
+  <details>
+  <summary>📸 <b>VIEW SCREENSHOT:</b> <code>How to zip and rename plugins</code> (Click to expand)</summary>
 
-<img src="assets/zip_rename_kbplugins.png" width="1200" alt="kbplugin format">
-</details>
+  <img src="assets/zip_rename_kbplugins.png" width="1200" alt="kbplugin format">
+  </details>
+* **Run the Importer Script**, select **Option 2**, and drag the `<PluginName>.kbplugin` file into the window
+* Target a volume (e.g., `swbf2_plugin_hvvplayground`).
+
 
 ### c. Kyber Module (`Kyber.dll`)
 * In Kyber Launcher: **Settings -> Accounts & Updates**.
 * Set **Target Service** to `kyber-module` and **Release Channel** to `ver/beta10`.
+  <details>
+  <summary>📸 <b>VIEW SCREENSHOT: <code>Kyber Launcher Release Channel</code> (Click to expand)</b></summary>
+  <br>
+  <img src="assets/kyber-module_setting.png" width="1200" alt="kbplugin format">
+  </details>
 * Join any server to trigger the update.
 * Locate the files at `C:\ProgramData\Kyber\Module\`.
-* Move this into a volume (e.g., `kyber_module_ver10`) using the same `docker run` method used in Step 2.
+* **Run the Importer Script**, select **Option 3**, and drag the `Kyber.dll` file into the window.
+* The script will ask if you want to switch to the parent `Module` folder—choose **Y**.
+* Target a volume (e.g., `kyber_module_ver10`).
 
-<details>
-<summary>📸 <b>VIEW SCREENSHOT: <code>Kyber Launcher Release Channel</code> (Click to expand)</b></summary>
-<br>
-<img src="assets/kyber-module_setting.png" width="1200" alt="kbplugin format">
-</details>
 
 ---
 <br><br>
@@ -336,3 +358,4 @@ docker-compose --env-file hvvchaos.env up -d
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+S
