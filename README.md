@@ -60,8 +60,12 @@ By default, Docker Desktop stores its virtual disk (where volumes live) on your 
 3. Under Disk image location, click `Browse` and select a folder on a secondary drive.
 4. Click `Apply`. Docker will move your existing data and volumes to the new location.
 
-<img src="assets/docker-settings.png" width="720" alt="Docker Settings Screen">
 
+<details>
+<summary>📸 <b>VIEW SCREENSHOT:</b> <code>How to move disk image location</code> (Click to expand)</summary>
+
+<img src="assets/docker-settings.png" width="720" alt="Docker Settings Screen">
+</details>
 
 <br>
 
@@ -73,7 +77,11 @@ By default, Docker Desktop stores its virtual disk (where volumes live) on your 
 
 >__IMPORTANT:__ : If your EA password contains special characters it may not work. It may be a good idea to change your password to UPPERCASE, lowercase, and numbers.
 
+<details>
+<summary>📸 <b>VIEW SCREENSHOT:</b> <code>How to use kyber_cli</code> (Click to expand)</summary>
+
 <img src="assets/kyber_cli_commands.png" width="720" alt="kyber_cli commands">
+</details>
 
 ---
 
@@ -157,11 +165,11 @@ Follow this pattern for all external assets to ensure maximum performance and ze
 ### a. Mods
 * In the Kyber Launcher: **Options -> Export Collection TAR**.
 * Create a volume (e.g., `swbf2_mods_hvv_chaos`) and ingest the `.tar` contents into it using the "Ingest the Mod files:" `docker run tar` method found in Step 2.
-  <details>
-  <summary>📸 <b>VIEW SCREENSHOT:</b> How to export mod collection (Click to expand)</summary>
+<details>
+<summary>📸 <b>VIEW SCREENSHOT:</b> <code>How to export mod collection</code> (Click to expand)</summary>
 
-  <img src="assets/kyber_export_mods.png" width="400" alt="Kyber Launcher mod collection export">
-  </details>
+<img src="assets/kyber_export_mods.png" width="400" alt="Kyber Launcher mod collection export">
+</details>
 
 
 ### b. Plugins
@@ -170,11 +178,11 @@ Follow this pattern for all external assets to ensure maximum performance and ze
 * Rename the file extension from `.zip` to `.kbplugin`.
 * Ensure the filename matches the plugin name (e.g., `HVVPlayground.kbplugin`) for consistent loading.
 * Move this into a volume (e.g., `swbf2_plugins_hvvplayground`) using the same `docker run` method used in Step 2.
-  <details>
-  <summary>📸 <b>VIEW SCREENSHOT:</b> How to zip and rename plugins (Click to expand)</summary>
+<details>
+<summary>📸 <b>VIEW SCREENSHOT:</b> <code>How to zip and rename plugins</code> (Click to expand)</summary>
 
-  <img src="assets/zip_rename_kbplugins.png" width="1200" alt="kbplugin format">
-  </details>
+<img src="assets/zip_rename_kbplugins.png" width="1200" alt="kbplugin format">
+</details>
 
 ### c. Kyber Module (`Kyber.dll`)
 * In Kyber Launcher: **Settings -> Accounts & Updates**.
@@ -182,11 +190,12 @@ Follow this pattern for all external assets to ensure maximum performance and ze
 * Join any server to trigger the update.
 * Locate the files at `C:\ProgramData\Kyber\Module\`.
 * Move this into a volume (e.g., `kyber_module_ver10`) using the same `docker run` method used in Step 2.
-  <details>
-  <summary>📸 <b>VIEW SCREENSHOT:</b> Kyber Launcher Release Channel (Click to expand)</summary>
 
-  <img src="assets/kyber-module_setting.png" width="1200" alt="kbplugin format">
-  </details>
+<details>
+<summary>📸 <b>VIEW SCREENSHOT: <code>Kyber Launcher Release Channel</code> (Click to expand)</b></summary>
+<br>
+<img src="assets/kyber-module_setting.png" width="1200" alt="kbplugin format">
+</details>
 
 ---
 <br><br>
@@ -262,13 +271,13 @@ MAXIMA_CREDENTIALS='EAusername:password'
 * Now in the same directory as your `docker-compose.yml` we can create files for individual servers or gamemodes named `<ServerName>.env` (e.g., `hvvchaos.env`, `hvv6v6.env`, `coopBFPlusXL.env`. etc) This keeps your different game mode settings organized. 
 <details>
 
-<summary>📸 <b>VIEW SCREENSHOT:</b> How to get your base64 map rotation string (Click to expand) 🚨</summary>
+<summary>📸 <b>VIEW SCREENSHOT:</b> <code>How to get your base64 map rotation string</code> (Click to expand) 🚨</summary>
 
 <img src="assets/Kyber_export_map_rotation.png" width="720" alt="Kyber Launcher map rotation base64 tool">
 
 > **Explanation:** In the Kyber Launcher → **Host Tab** → **Export** → **Copy To Clipboard** the base64 string.  
-> Paste it into your `.env` file like this:  
-> `SERVER_MAP_ROTATION='WyJzdXBfZ2Vvbm9zaXMiLCJzdXBfY2FzY2FkZSJd'`
+> Paste it into your `.env` file wrapped in single qoutes like this:  
+> SERVER_MAP_ROTATION='`WyJzdXBfZ2Vvbm9zaXMiLCJzdXBfY2FzY2FkZSJd`'
 </details>
 
 <br>
@@ -313,11 +322,13 @@ PLUGIN_VOLUME=empty_data
 docker-compose --env-file hvvchaos.env up -d
 ```
 >__Note:__ Use `-d` for detached (background) mode. Watch logs with `docker compose logs -f` or check on the running containers in docker-desktop.
-  <details>
-  <summary>📸 <b>VIEW SCREENSHOT:</b> Launching and Logs (Click to expand)</summary>
 
-  <img src="assets/deploying_logs.png" width="1200" alt="kbplugin format">
-  </details>
+
+> <details>
+> <summary>📸 <b>VIEW SCREENSHOT:</b> <code>Launching and Logs</code> (Click to expand)</summary>
+>
+> <img src="assets/deploying_logs.png" width="1200" alt="kbplugin format">
+> </details>
 <br><br><br>
 - Use the `.example` files as templates only.
 - Copy them to remove the `.example` suffix (e.g., `cp secrets.env.example secrets.env`).
