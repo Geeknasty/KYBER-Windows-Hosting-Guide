@@ -6,16 +6,22 @@ Host community servers for **STAR WARS Battlefront II (2017)** using KYBER with 
 [![Windows](https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
 [![KYBER](https://img.shields.io/badge/KYBER-Main%20Page-%23f2ae09?logo=star-wars&logoColor=black)](https://kyber.gg/)
 
+> [!TIP]
+> **New: Easy Asset Ingestion Script!** 🚀
+> We've added a PowerShell tool that automates the complex task of creating Docker volumes and transferring your game files, mods, and plugins with a simple drag-and-drop interface. [Jump to Script Setup](#option-a-use-the-kyber-asset-importer-recommended).
+
 **Quick Links:**
+- [🚀 Asset Importer Script](#option-a-use-the-kyber-asset-importer-recommended)
 - [Full Guide](#guide-hosting-kyber-dedicated-servers-on-windows-docker--kyber) (below)
 - [Official KYBER Docs](https://docs.kyber.gg/g/hosting/dedicated-servers)
 - [KYBER Discord](https://discord.gg/kyber) (for support/questions)
 
 ## Features / Why This Guide?
-- Step-by-step Windows-specific setup using Docker Desktop + WSL2
-- Avoids common pitfalls (NTFS mounts, permission errors)
-- Supports mods, plugins, Kyber Module, and multiple gamemodes/servers
-- Example configs included (`docker-compose.yml`, `.env` templates)
+- **Automated Ingestion:** New script handles Linux-native volume creation and file syncing for you.
+- **Windows Optimized:** Step-by-step setup using Docker Desktop + WSL2.
+- **Error Prevention:** Avoids common pitfalls like NTFS mounts and `Activation64.dll` permission errors.
+- **Scalable:** Supports mods, plugins, Kyber Module, and multiple server instances.
+- **Docker-Compose:** Example configs included (`docker-compose.yml`, `.env` templates)
 
 ## Prerequisites (Quick Check)
 - Windows 10/11 with Virtualization enabled in BIOS
@@ -120,7 +126,7 @@ If you already have Star Wars Battlefront II installed locally (Steam, EA App/Or
 
 ### Option A: Use the KYBER Asset Importer (Recommended)
 
-1. **Download the Script:** Save `import-assets-v1.ps1` to your project folder.
+1. **Download the Script:** Save `import-assets.ps1` to your project folder.
 1. **Run it:** Right-click the file and select **Run with PowerShell**.
 1. **Follow the Prompts:**
 
@@ -130,7 +136,7 @@ If you already have Star Wars Battlefront II installed locally (Steam, EA App/Or
 
 **💡 Note:** The script will list your existing volumes. If you type a name that doesn't exist yet (e.g., `swbf2_data`), the script will automatically create it for you.
 
-<img src="assets/import-assets.png" width="720" alt="kbplugin format">
+<img src="assets/import-assets.png" width="720" alt="Asset Importer Script Menu">
 
 ### Option B: Manual Ingestion (Advanced)
 If you prefer using the CLI manually, follow these steps:
@@ -169,6 +175,7 @@ If you prefer using the CLI manually, follow these steps:
     >__Note:__ This command is different because we need to extract the modcollection.tar into our docker volume.
   
 </details>
+
 ---
 <br><br>
 
