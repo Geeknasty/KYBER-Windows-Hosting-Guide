@@ -1,6 +1,7 @@
 <#
 .SYNOPSIS
-    v1.0 Final - KYBER Server Asset Importer
+    v1.1 - KYBER Server Asset Importer
+    - Fixed: Detection of .tar files without extensions (exported from mod tools).
     - Added: Feedback message for large MOD extraction to prevent user panic.
     - Validates file extensions (.tar, .kbplugin).
     - Interactive Y/n switch for parent folder detection.
@@ -11,7 +12,7 @@
 # --- 1. SETUP AND MENU ---
 Clear-Host
 Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "   KYBER Server Asset Importer (v1.0)     " -ForegroundColor Cyan
+Write-Host "   KYBER Server Asset Importer (v1.1)     " -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "1. Import Mod Collection (.tar)"
 Write-Host "2. Import Plugin (.kbplugin)"
@@ -60,7 +61,41 @@ elseif (-not $needsFolder -and $isActuallyFolder) {
 }
 elseif (-not $needsFolder -and -not $isActuallyFolder) {
     $currentExt = [System.IO.Path]::GetExtension($sourcePath)
-    if ($currentExt -ne $validExt) {
+    
+    # Special handling for MOD files - check if it's a tar without extension
+    if ($type -eq "MOD" -and [string]::IsNullOrEmpty($currentExt)) {
+        Write-Host "File has no extension. Checking if it's a valid tar archive..." -ForegroundColor Yellow
+        
+        # Read only first 512 bytes to check for tar signature (handles large files)
+        try {
+            $fileStream = [System.IO.File]::OpenRead($sourcePath)
+            $buffer = New-Object byte[] 512
+            $bytesRead = $fileStream.Read($buffer, 0, 512)
+            $fileStream.Close()
+            
+            if ($bytesRead -lt 262) {
+                Write-Host "ERROR: File is too small to be a valid tar archive." -ForegroundColor Red
+                exit
+            }
+            
+            # Check for "ustar" signature at byte offset 257 (tar format identifier)
+            $ustarSignature = [System.Text.Encoding]::ASCII.GetString($buffer[257..261])
+            
+            if ($ustarSignature -eq "ustar") {
+                Write-Host "SUCCESS: Valid tar archive detected (exported without extension)." -ForegroundColor Green
+                # Continue processing - this is valid
+            } else {
+                Write-Host "ERROR: File does not appear to be a valid tar archive." -ForegroundColor Red
+                Write-Host "Expected tar signature not found. Please verify the file." -ForegroundColor Red
+                exit
+            }
+        }
+        catch {
+            Write-Host "ERROR: Unable to read file for validation: $_" -ForegroundColor Red
+            exit
+        }
+    }
+    elseif ($currentExt -ne $validExt) {
         Write-Host "ERROR: Invalid file type! Expected $validExt but got $currentExt" -ForegroundColor Red
         exit
     }
