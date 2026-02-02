@@ -10,6 +10,17 @@
     - Rsync progress bars for Game Files and Modules.
 #>
 
+# --- PRE-CHECK DOCKER ---
+Write-Host "Checking Docker status..." -ForegroundColor Gray
+& docker info >$null 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR: Docker is not running or not found in PATH." -ForegroundColor Red
+    Write-Host "Please start Docker Desktop and try again." -ForegroundColor Yellow
+    Write-Host "`nPress any key to exit..."
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit
+}
+Write-Host "Docker is running.`n" -ForegroundColor Green
 # --- 1. SETUP AND MENU ---
 Clear-Host
 Write-Host "==========================================" -ForegroundColor Cyan
