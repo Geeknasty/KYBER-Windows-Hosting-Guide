@@ -275,6 +275,11 @@ docker run `
   ghcr.io/armchairdevelopers/kyber-server:latest
   ```
 
+  <details>
+  <summary>📸 <b>VIEW SCREENSHOT: <code>Environment Variables Reference Image</code> (Click to expand)</b></summary>
+  <br>
+  <img src="assets/env-variables-reference.png" width="720" alt="Environment Variables">
+  </details>
 <br>
 
 ### If you would like to control your KYBER servers with YAML configuration files, continue with `docker-compose`
