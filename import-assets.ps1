@@ -51,15 +51,20 @@ if ($allowMultiple) {
     Write-Host "TIP: You can drag multiple files separated by spaces!" -ForegroundColor Cyan
 }
 
-$inputPath = (Read-Host "Enter path(s) (drag and drop here)").Trim('"')
+$inputPath = (Read-Host "Enter path(s) (drag and drop here)")
 
-# Parse multiple paths (handles both quoted and unquoted paths)
 $sourcePaths = @()
 if ($allowMultiple) {
-    # Split by quotes and spaces, filter empty entries
-    $rawPaths = $inputPath -split '"\s+"' -split '\s+' | Where-Object { $_ -ne "" }
-    foreach ($path in $rawPaths) {
-        $cleanPath = $path.Trim('"').Trim()
+    $pattern = '"([^"]+)"|(\S+)'
+    $regexMatches = [regex]::Matches($inputPath, $pattern)
+    
+    foreach ($match in $regexMatches) {
+        $cleanPath = if ($match.Groups[1].Success) { 
+            $match.Groups[1].Value 
+        } else { 
+            $match.Groups[2].Value 
+        }
+        
         if ($cleanPath) {
             $sourcePaths += $cleanPath
         }
@@ -67,22 +72,34 @@ if ($allowMultiple) {
 } else {
     $sourcePaths = @($inputPath)
 }
+# ── Validate all paths actually exist ────────────────────────────────
 
-# Validate all paths exist
 $invalidPaths = @()
-foreach ($path in $sourcePaths) {
-    if (-not (Test-Path $path)) {
-        $invalidPaths += $path
+$validSourcePaths = @()
+
+foreach ($p in $sourcePaths) {
+    if (Test-Path $p) {
+        $validSourcePaths += $p
+    } else {
+        $invalidPaths += $p
     }
 }
 
+$sourcePaths = $validSourcePaths
+
 if ($invalidPaths.Count -gt 0) {
-    Write-Host "ERROR: The following path(s) not found:" -ForegroundColor Red
+    Write-Host "ERROR: The following path(s) do not exist:" -ForegroundColor Red
     $invalidPaths | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
-    exit
+    Write-Host ""
+    exit 1
 }
 
-Write-Host "`nFound $($sourcePaths.Count) file(s) to import." -ForegroundColor Green
+if ($sourcePaths.Count -eq 0) {
+    Write-Host "ERROR: No valid paths were provided." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "`nFound $($sourcePaths.Count) valid file(s)/folder(s) to import." -ForegroundColor Green
 
 # --- VALIDATE EACH FILE ---
 foreach ($sourcePath in $sourcePaths) {
@@ -113,7 +130,6 @@ foreach ($sourcePath in $sourcePaths) {
         if ($type -eq "MOD" -and [string]::IsNullOrEmpty($currentExt)) {
             Write-Host "File has no extension. Checking if it's a valid tar archive..." -ForegroundColor Yellow
             
-            # Read only first 512 bytes to check for tar signature (handles large files)
             try {
                 $fileStream = [System.IO.File]::OpenRead($sourcePath)
                 $buffer = New-Object byte[] 512
@@ -125,12 +141,10 @@ foreach ($sourcePath in $sourcePaths) {
                     exit
                 }
                 
-                # Check for "ustar" signature at byte offset 257 (tar format identifier)
                 $ustarSignature = [System.Text.Encoding]::ASCII.GetString($buffer[257..261])
                 
                 if ($ustarSignature -eq "ustar") {
                     Write-Host "SUCCESS: Valid tar archive detected (exported without extension)." -ForegroundColor Green
-                    # Continue processing - this is valid
                 } else {
                     Write-Host "ERROR: File does not appear to be a valid tar archive." -ForegroundColor Red
                     Write-Host "Expected tar signature not found. Please verify the file." -ForegroundColor Red
