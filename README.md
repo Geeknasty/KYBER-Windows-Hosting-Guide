@@ -120,7 +120,7 @@ kyber_cli download_game -p "C:\Path\To\Game" -t <your_ea_token>
 
 **Alternative: Reuse your existing Battlefront II installation** (Recommended if already downloaded the game and it's unmodified)
 
-If you already have Star Wars Battlefront II installed locally (Steam, EA App/Origin, etc.), you can copy directly from there instead of downloading ~90 GB again. However, any modifications to the game files may negativly effect server hosting. If you're unsure it may be better to download a fresh copy.
+If you already have Star Wars Battlefront II installed locally (Steam, EA App/Origin, etc.), you can copy directly from there instead of downloading ~90 GB again. However, any modifications to the game files may negatively effect server hosting. If you're unsure it may be better to download a fresh copy.
 
 1. Locate your game install folder:
    - Steam: Right-click game in library → Manage → Browse local files
@@ -142,7 +142,7 @@ If you already have Star Wars Battlefront II installed locally (Steam, EA App/Or
 1. **Download the Script:**
    - **Direct Download:** [import-assets.ps1](https://raw.githubusercontent.com/Geeknasty/KYBER-Windows-Hosting-Guide/main/import-assets.ps1) (right-click → Save As)
    - Or clone this repo: `git clone https://github.com/Geeknasty/KYBER-Windows-Hosting-Guide.git`
-   - Or [Download all files as ZIP](https://github.com/Geeknasty/KYBER-Windows-Hosting-Guide/archive/refs/heads/main.zip) exract the script.
+   - Or [Download all files as ZIP](https://github.com/Geeknasty/KYBER-Windows-Hosting-Guide/archive/refs/heads/main.zip) extract the script.
 1. **Run it:** Right-click the `import-assets.ps1` file and select **Run with PowerShell**.
 1. **Follow the Prompts:**
 
@@ -339,7 +339,7 @@ volumes:
 
 ### B Environment Files (.env)
 
-- Create `secrets.env` in the same directory as your `docker-compose.yml`. This keeps your `<token>` and `<EA-Username>:<password>` seperate and organized. We will load `secrets.env` automatically by listing it in our `docker-compose.yml`.  If your EA password contains special characters, you may need to change your password. Use `kyber_cli get_token` → KYBER_TOKEN=`<token>`
+- Create `secrets.env` in the same directory as your `docker-compose.yml`. This keeps your `<token>` and `<EA-Username>:<password>` separate and organized. We will load `secrets.env` automatically by listing it in our `docker-compose.yml`.  If your EA password contains special characters, you may need to change your password. Use `kyber_cli get_token` → KYBER_TOKEN=`<token>`
 
 ```yml
 # secrets.env
@@ -357,7 +357,7 @@ MAXIMA_CREDENTIALS='<EA-Username>:<password>'
 <img src="assets/Kyber_export_map_rotation.png" width="720" alt="Kyber Launcher map rotation base64 tool">
 
 > **Explanation:** In the Kyber Launcher → **Host Tab** → **Export** → **Copy To Clipboard** the base64 string.  
-> Paste it into your `.env` file wrapped in single qoutes like this:  
+> Paste it into your `.env` file wrapped in single quotes like this:  
 > SERVER_MAP_ROTATION='`WyJzdXBfZ2Vvbm9zaXMiLCJzdXBfY2FzY2FkZSJd`'
 </details>
 
