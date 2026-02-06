@@ -149,8 +149,8 @@ If you already have Star Wars Battlefront II installed locally (Steam, EA App/Or
      1. Open PowerShell in the folder containing the script (Shift + Right-click in folder → "Open PowerShell window here")
      2. Run: `PowerShell -ExecutionPolicy Bypass -File ./import-assets.ps1`
 
-   > [!NOTE]
-   > If you see a red error about "running scripts is disabled," use Method 2. This bypasses the restriction for this script only without changing your system settings.
+> [!NOTE]
+> If you see a red error about "running scripts is disabled," use Method 2. This bypasses the restriction for this script only without changing your system settings.
 
 1. **Follow the Prompts:**
 
