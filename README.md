@@ -46,7 +46,7 @@ This guide allows you to host a Kyber V2 dedicated server on Windows using Docke
 
 - Ensure **Virtualization** is enabled in your BIOS/UEFI.
   - Restart your PC and repeatedly tap the key to enter BIOS setup (usually Delete, F2, or F10 — watch the boot screen for the hint).
-  - Find and turn on the virtualization option (look in Advanced, CPU, or Security menu; it’s called Intel VT-x, AMD-V, SVM Mode, or similar — change from Disabled to Enabled).
+  - Find and turn on the virtualization option (look in Advanced, CPU, or Security menu; it's called Intel VT-x, AMD-V, SVM Mode, or similar — change from Disabled to Enabled).
   - Save & exit (usually F10 → Yes), let it reboot — virtualization is now active (check in Task Manager → Performance tab if you want to confirm).
   - Can't find it? Google "[your motherboard model] enable virtualization"
 
@@ -92,7 +92,21 @@ By default, Docker Desktop stores its virtual disk (where volumes live) on your 
   - `kyber_cli get_token` (Save this token. This will be used later as `KYBER_TOKEN=<token>`)
   - `kyber_cli get_ea_token` (To verify game ownership)
 
->**IMPORTANT:** : If your EA password contains special characters it may not work. It may be a good idea to change your password to UPPERCASE, lowercase, and numbers.
+> [!CAUTION]
+> **EA PASSWORD SPECIAL CHARACTERS WARNING**
+>
+> If your EA password contains special characters (!, @, #, $, %, ^, &, *, etc.), your server will likely fail to start.
+>
+> **Symptoms:** Server hangs or fails at the `start_server` command in logs, even when everything else appears correct.
+>
+> An error occurred. Please try again later.
+> AnyhowException(license request failed: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?> <error code="INVALID_PASSWORD"/>`
+>
+> **Solution:** Change your EA password to use ONLY:
+>
+> - Uppercase letters (A-Z)
+> - Lowercase letters (a-z)  
+> - Numbers (0-9)
 
 <details>
 <summary>📸 <b>VIEW SCREENSHOT:</b> <code>How to use kyber_cli</code> (Click to expand)</summary>
@@ -143,26 +157,86 @@ If you already have Star Wars Battlefront II installed locally (Steam, EA App/Or
    - **Direct Download:** [import-assets.ps1](https://raw.githubusercontent.com/Geeknasty/KYBER-Windows-Hosting-Guide/main/import-assets.ps1) (right-click → Save As)
    - Or clone this repo: `git clone https://github.com/Geeknasty/KYBER-Windows-Hosting-Guide.git`
    - Or [Download all files as ZIP](https://github.com/Geeknasty/KYBER-Windows-Hosting-Guide/archive/refs/heads/main.zip) extract the script.
-1. **Run it:**
-   - **Method 1 (Simple):** Right-click the `import-assets.ps1` file and select **Run with PowerShell**.
-   - **Method 2 (If you get an execution policy error):**
-     1. Open PowerShell in the folder containing the script (Shift + Right-click in folder → "Open PowerShell window here")
-     2. Run: `PowerShell -ExecutionPolicy Bypass -File ./import-assets.ps1`
+
+2. **Run it:**
+
+   > [!IMPORTANT]
+   > **Windows 11 Users:** The "Run with PowerShell" option may be hidden. Click "Show more options" at the bottom of the right-click menu to reveal it.
+
+   **Method 1 (Simple):**
+   - Right-click the `import-assets.ps1` file
+   - Select **Run with PowerShell**
+   - **Shortcut:** Hold `Ctrl + Shift` while clicking "Run with PowerShell" to run as administrator
+
+   **Method 2 (If script flashes and closes immediately):**
+   1. Search for "PowerShell" in the Start menu
+   2. Right-click PowerShell → **Run as administrator**
+   3. Navigate to the script folder using `cd` command:
+      - Type `cd` followed by a space
+      - Copy the folder path from File Explorer's address bar (click the path at the top)
+      - Paste into PowerShell (right-click to paste)
+      - Press Enter
+   4. Run: `PowerShell -ExecutionPolicy Bypass -File ./import-assets.ps1`
+
+   **Method 3 (If you see "execution policy" error):**
+   1. Open PowerShell as administrator (see Method 2, steps 1-2)
+   2. Navigate to the script folder (see Method 2, step 3)
+   3. Run: `PowerShell -ExecutionPolicy Bypass -File ./import-assets.ps1`
 
 > [!NOTE]
-> If you see a red error about "running scripts is disabled," use Method 2. This bypasses the restriction for this script only without changing your system settings.
+> **About Execution Policy Errors:**
+> If you see a red error about "running scripts is disabled," this is a Windows security feature. The `-ExecutionPolicy Bypass` command bypasses the restriction for this script only without permanently changing your system settings. This is the safest approach.
+>
+> **Alternative (Not Recommended):** You can temporarily allow scripts with:
+>
+> ```powershell
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
+>
+> But remember to revert it after running the script for security:
+>
+> ```powershell
+> Set-ExecutionPolicy -ExecutionPolicy Undefined -Scope CurrentUser
+> ```
 
-1. **Follow the Prompts:**
+3. **Follow the Prompts:**
 
-    - Select **Option 4** to import your Game Files first.
-    - Select **Option 1** for your Mod `.tar` files.
-    - Select **Option 2** for your `.kbplugin` files.
-
-**💡 Note:** The script will list your existing volumes. If you type a name that doesn't exist yet (e.g., `swbf2_data`), the script will automatically create it for you.
+   - Select **Option 4** to import your Game Files first.
+   - Select **Option 1** for your Mod `.tar` files.
+   - Select **Option 2** for your `.kbplugin` files.
 
 > [!TIP]
-> **Use a naming convention for your Docker volumes**
-> Later on when you configure and run your server. You will want easy to identify Docker volumes for your game files, mods, and plugins.
+> **Understanding Docker Volume Names:**
+>
+> When the script asks for a volume name, **you choose the name yourself**. The script will automatically create the volume if it doesn't exist yet.
+>
+> **Recommended Naming Convention:**
+> Use descriptive names that indicate what's stored inside:
+>
+> - Game files: `swbf2_gamefiles` or `swbf2_data_vanilla`
+> - Mods: `swbf2_mods_hvvchaos` or `swbf2_mods_reinforcement`
+> - Plugins: `swbf2_plugins_hvvplayground` or `swbf2_plugins_custom`
+> - Kyber Module: `kyber_module_ver10`
+>
+> **Example workflow:**
+>
+> ```powershell
+> Script: "Enter target volume name:"
+> You type: swbf2_gamefiles
+> Script: "Volume doesn't exist. Creating swbf2_gamefiles..."
+> ```
+>
+> Later in your `.env` files, you'll reference these exact names. Good naming now saves confusion later!
+
+> [!IMPORTANT]
+> **Create an empty_data volume for servers without mods/plugins:**
+>
+> If you plan to run vanilla servers (no mods or plugins), create an empty volume now:
+>
+> 1. Open PowerShell
+> 2. Run: `docker volume create empty_data`
+>
+> You'll reference this in your `.env` files later for servers that don't use mods or plugins.
 
 <img src="assets/import-assets.png" width="720" alt="Asset Importer Script Menu">
 
@@ -281,7 +355,7 @@ docker run `
   -v "<swbf2_mods_gamemode_volume>:/mnt/battlefront/mods" `
   -it `
   ghcr.io/armchairdevelopers/kyber-server:latest
-  ```
+```
 
   <details>
   <summary>📸 <b>VIEW SCREENSHOT: <code>Environment Variables Reference Image</code> (Click to expand)</b></summary>
@@ -296,9 +370,61 @@ docker run `
 
 To deploy the server we will use docker-compose. This will require a `docker-compose.yml` and a few `.env` files. We will use the `docker-compose.yml` as a reusable template, `secrets.env` to store tokens, and `<ServerName>.env` to store individual server settings and environment variables. See the [Dedicated-Server Config Docs](https://docs.kyber.gg/g/hosting/dedicated-servers/config) for a list of environment variables.
 
+> [!TIP]
+> **Where to Create These Files:**
+>
+> Create a dedicated folder for your server configuration (e.g., `C:\KyberServers` or `C:\Users\YourName\Documents\KyberServers`).
+>
+> Inside this folder, you'll create:
+>
+> - `docker-compose.yml` (universal template - one file for all servers)
+> - `secrets.env` (your tokens/credentials - shared across servers)
+> - Individual `.env` files for each server/gamemode (e.g., `hvvchaos.env`, `vanilla.env`)
+>
+> **Example folder structure:**
+>
+> ```plaintext
+> C:\KyberServers\
+> ├── docker-compose.yml
+> ├── secrets.env
+> ├── hvvchaos.env
+> ├── vanilla.env
+> └── logs\
+>     ├── hvvchaos_server\
+>     └── vanilla_server\
+> ```
+>
+> **Important:** Use a text editor like Notepad, Notepad++, or VS Code to edit these files.
+
 ### A. docker-compose.yml file
 
 - Create a file named `docker-compose.yml` in your project directory. It acts as a universal template. This file is used to start the server. Server logs will be output in the same directory as this file.
+
+> [!NOTE]
+> **What to Edit in docker-compose.yml:**
+>
+> For most users, you only need to change the volume names at the bottom of the file to match the volumes you created earlier.
+>
+> **Find this section at the bottom:**
+>
+> ```yaml
+> volumes:
+>   swbf2_data:  # ← Change this to your game files volume name
+>     external: true
+>   kyber_module_ver10:  # ← Change this to your Kyber module volume name
+>     external: true
+> ```
+>
+> **Leave these alone** (they pull from your `.env` files):
+>
+> ```yaml
+>   kyber_mods:
+>     external: true
+>     name: ${MOD_VOLUME:-empty_data}
+>   kyber_plugins:
+>     external: true
+>     name: ${PLUGIN_VOLUME:-empty_data}
+> ```
 
 ```yaml
 services:
@@ -342,19 +468,50 @@ volumes:
   kyber_plugins:
     external: true
     name: ${PLUGIN_VOLUME:-empty_data}
-
 ```
 
 ### B Environment Files (.env)
 
-- Create `secrets.env` in the same directory as your `docker-compose.yml`. This keeps your `<token>` and `<EA-Username>:<password>` separate and organized. We will load `secrets.env` automatically by listing it in our `docker-compose.yml`.  If your EA password contains special characters, you may need to change your password. Use `kyber_cli get_token` → KYBER_TOKEN=`<token>`
+- Create `secrets.env` in the same directory as your `docker-compose.yml`. This keeps your `<token>` and `<EA-Username>:<password>` separate and organized. We will load `secrets.env` automatically by listing it in our `docker-compose.yml`.
+
+> [!IMPORTANT]
+> **Editing Placeholder Values:**
+>
+> When filling in the `.env` files:
+>
+> 1. **Remove the `<` and `>` symbols** around placeholders
+> 2. **Keep single quotes `'`** around values that contain spaces or special characters
+> 3. **Replace `<token>` exactly** - no brackets left behind
+>
+> **Examples:**
+>
+> ```bash
+> # WRONG - Don't do this:
+> KYBER_TOKEN=<abc123xyz>
+> MAXIMA_CREDENTIALS=email:password
+> 
+> # CORRECT - Do this:
+> KYBER_TOKEN=abc123xyz
+> MAXIMA_CREDENTIALS='email:password'
+> ```
+>
+> **Why the quotes?**
+>
+> - `MAXIMA_CREDENTIALS='email:password'` - Quotes ensure the colon `:` isn't misinterpreted
+> - `SERVER_NAME='My Cool Server'` - Quotes preserve spaces
+> - `KYBER_TOKEN=abc123` - No quotes needed (no spaces or special characters)
+
+Use `kyber_cli get_token` to get your KYBER_TOKEN value.
 
 ```yml
 # secrets.env
 # Secret Stuff
-KYBER_TOKEN=<token>
-MAXIMA_CREDENTIALS='<EA-Username>:<password>'
+KYBER_TOKEN=abc123xyz456
+MAXIMA_CREDENTIALS='your-email@example.com:YourPassword123'
 ```
+
+> [!CAUTION]
+> Remember: If your EA password has special characters (!, @, #, etc.), the server may fail to start. See the warning in [Prerequisites Section 3](#3-obtain-kyber-credentials).
 
 - Now in the same directory as your `docker-compose.yml` we can create files for individual servers or gamemodes named `<ServerName>.env` (e.g., `hvvchaos.env`, `hvv6v6.env`, `coopBFPlusXL.env`. etc) This keeps your different game mode settings organized.
 
@@ -366,10 +523,12 @@ MAXIMA_CREDENTIALS='<EA-Username>:<password>'
 
 > **Explanation:** In the Kyber Launcher → **Host Tab** → **Export** → **Copy To Clipboard** the base64 string.  
 > Paste it into your `.env` file wrapped in single quotes like this:  
-> SERVER_MAP_ROTATION='`WyJzdXBfZ2Vvbm9zaXMiLCJzdXBfY2FzY2FkZSJd`'
+> `SERVER_MAP_ROTATION='WyJzdXBfZ2Vvbm9zaXMiLCJzdXBfY2FzY2FkZSJd'`
 </details>
 
 <br>
+
+**Example 1: Server with mods and plugins**
 
 ```yml
 # hvvchaos.env
@@ -378,55 +537,245 @@ COMPOSE_PROJECT_NAME=hvvchaos
 CONTAINER_NAME=hvvchaos_server
 SERVER_NAME='HVV Chaos Playground'
 SERVER_MAX_PLAYERS=40
-SERVER_DESCRIPTION='(Optional) A longer UTF-8 description (≤256 characters) for server rules or links.'
-SERVER_MAP_ROTATION='<base64-encoded‐map‐rotation>'
-#Pick which Mods and Plugins you want 
+SERVER_DESCRIPTION='A longer UTF-8 description (≤256 characters) for server rules or links.'
+SERVER_MAP_ROTATION='WyJzdXBfZ2Vvbm9zaXMiLCJzdXBfY2FzY2FkZSJd'
+
+# Pick which Mods and Plugins you want (use your volume names from Step 2)
 MOD_VOLUME=swbf2_mods_hvv_chaos
 PLUGIN_VOLUME=swbf2_plugins_hvvplayground
-# You can copy the 2 ENV Variables below into all <gamemode>.env that use mods and plugins
+
+# Copy these 2 lines into all .env files that use mods/plugins
 KYBER_MOD_FOLDER=/mnt/battlefront/mods
 KYBER_SERVER_PLUGINS_PATH=/mnt/plugins
 ```
 
-- We can use the `empty_data` volume for servers without mods or plugins
+**Example 2: Vanilla server (no mods or plugins)**
 
 ```yml
-# vanillahvv.env
+# vanilla.env
 # Server Settings
 COMPOSE_PROJECT_NAME=vanillahvv
 CONTAINER_NAME=vanillahvv_server
-SERVER_NAME='No Mods Server'
+SERVER_NAME='Vanilla HvV Server'
 SERVER_MAX_PLAYERS=12
 SERVER_DESCRIPTION='Vanilla HvV Map Rotation Test Server'
-SERVER_MAP_ROTATION='<base64-encoded‐map‐rotation>'
+SERVER_MAP_ROTATION='WyJob3RoX2hlcm9fdnNfdmlsbGFpbiJd'
 SERVER_PASSWORD=1234
-#We use empty mod and plugin volumes
+
+# For vanilla servers with no mods/plugins, use empty_data
 MOD_VOLUME=empty_data
 PLUGIN_VOLUME=empty_data
+
+# Optional: Comment these out or leave them - they're ignored when using empty_data
+# KYBER_MOD_FOLDER=/mnt/battlefront/mods
+# KYBER_SERVER_PLUGINS_PATH=/mnt/plugins
 ```
 
 ---
 <br><br>
 
-## Step 4: Launching
+## Step 5: Launching & Verifying Your Server
 
-### Run the server by specifying only the per-server/gamemode `.env` file (`secrets.env` loads automatically via `docker-compose.yml`)
+### Starting Your Server
+
+Run the server by specifying only the per-server/gamemode `.env` file (`secrets.env` loads automatically via `docker-compose.yml`):
+
+1. Open PowerShell (or Command Prompt) in your server folder
+2. Run the command for your server:
 
 ```powershell
 docker-compose --env-file hvvchaos.env up -d
 ```
-> [!NOTE]
->Use `-d` for detached (background) mode. Watch logs with `docker compose logs -f` or check on the running containers in docker-desktop.
-> <details>
-> <summary>📸 <b>VIEW SCREENSHOT:</b> <code>Launching and Logs</code> (Click to expand)</summary>
->
-> <img src="assets/deploying_logs.png" width="1200" alt="kbplugin format">
-> </details>
-<br><br><br>
 
-- Use the `.example` files as templates only.
-- Copy them to remove the `.example` suffix (e.g., `cp secrets.env.example secrets.env`).
-- The `.gitignore` file automatically prevents committing real `.env` files.
+> [!NOTE]
+> Use `-d` for detached (background) mode. Remove `-d` to see logs directly in the terminal.
+
+**Checking Container Status:**
+
+**Option 1: Docker Desktop** (Easiest for beginners)
+
+1. Open Docker Desktop
+2. Click "Containers" in the left sidebar
+3. Find your container (e.g., `hvvchaos_server`)
+4. Status should eventually show "Running" with a green dot
+
+**Option 2: Command Line**
+
+```powershell
+docker ps
+```
+
+Look for your container name - it should show "Up" status.
+
+<details>
+<summary>📸 <b>VIEW SCREENSHOT:</b> <code>Docker Desktop Container Status</code> (Click to expand)</summary>
+
+<img src="assets/docker-desktop-containers.png" width="720" alt="Docker Desktop containers view">
+</details>
+
+### Reading Logs
+
+Logs help you verify the server started correctly and troubleshoot issues.
+
+**Option 1: Docker Desktop** (Recommended for beginners)
+
+1. Open Docker Desktop → Containers
+2. Click on your container name
+3. Click the "Logs" tab
+4. Scroll to see recent activity
+
+**Option 2: Log Files**
+Check the `logs/` folder created next to your `docker-compose.yml` file:
+
+```powershell
+C:\KyberServers\logs\hvvchaos_server\
+```
+
+### Understanding Log Output
+
+> [!TIP]
+> **What Healthy Logs Look Like:**
+>
+> ✅ **Good signs:**
+>
+> - Logs show progression past `start_server` command
+> - You see "Server started" or similar messages
+> - Server appears in Kyber Launcher → Host tab → "Your Hosted Servers"
+> - No repeated errors or crash loops
+>
+> ⚠️ **Benign warnings (safe to ignore):**
+>
+> - `DISPLAY` environment variable warnings
+> - Wine display/headless errors
+>
+> ❌ **Problem signs:**
+>
+> - Stuck at or failing right after `start_server` command
+> - Repeated crash/restart loops
+> - Authentication errors: license request failed: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?> <error code="INVALID_PASSWORD"/>`
+
+<details>
+<summary>📸 <b>VIEW SCREENSHOTS:</b> <code>Healthy logs vs. Problem logs</code> (Click to expand)</summary>
+
+**Healthy startup logs:**
+<img src="assets/healthy_logs.png" width="1200" alt="Successful server logs">
+
+**Failed startup (stuck at start_server):**
+<img src="assets/logs-failed-startup.png" width="1200" alt="Failed startup logs">
+</details>
+
+### Verifying Server is Live
+
+**In Kyber Launcher:**
+
+1. Open Kyber Launcher
+2. Go to the "Host" tab
+3. Look in "Your Hosted Servers" section
+4. Your server should appear in the list
+
+<details>
+<summary>📸 <b>VIEW SCREENSHOT:</b> <code>Server appears in Kyber Launcher</code> (Click to expand)</summary>
+
+<img src="assets/kyber-launcher-hosted-servers.png" width="720" alt="Kyber Launcher showing hosted server">
+</details>
+
+### Common Startup Issues & Solutions
+
+> [!WARNING]
+> **Server fails or hangs at `start_server` command:**
+>
+>
+> This is the most common failure point. Usually caused by:
+>
+> 1. **EA password with special characters** → See [Prerequisites Section 3](#3-obtain-kyber-credentials)
+> 2. **Incorrect KYBER_TOKEN** → Regenerate with `kyber_cli get_token` and copy exactly
+> 3. **Typo in credentials** → Double-check `secrets.env` for copy/paste errors
+> 4. **Wrong volume names** → Verify volume names in `docker-compose.yml` match your created volumes
+>
+> **How to fix:**
+>
+> 1. Stop the server: `docker compose down`
+> 2. Fix the issue in your `.env` files
+> 3. Restart: `docker-compose --env-file yourserver.env up -d`
+
+**Other issues:**
+
+| Problem | Solution |
+|---------|----------|
+| Container immediately exits | Check logs for Python errors; verify game files volume exists |
+| "Volume not found" error | Run `docker volume ls` to verify volume names, recreate if missing |
+| Can't connect to server in-game | Check firewall settings; verify ports not blocked |
+| Mods not loading | Confirm `MOD_VOLUME` name matches your actual mod volume |
+
+### Stopping Your Server
+
+**Use Docker Desktop** Container tab
+
+or
+
+```powershell
+# Stop and remove container
+docker compose --env-file yourserver.env down
+
+# Stop but keep container (can restart later)
+docker compose --env-file yourserver.env stop
+```
+
+### Running Multiple Servers
+
+To run different gamemodes/servers simultaneously:
+
+```powershell
+
+docker-compose --env-file hvvchaos.env up -d
+  
+docker-compose --env-file vanilla.env up -d
+
+```
+
+Each server will have its own container, logs folder, and appear separately in the Kyber Launcher.
+
+---
+
+<br><br>
+
+## Quick Start Recommendation
+
+> [!TIP]
+> **For your first server, start simple:**
+>
+> 1. Create a vanilla server (no mods/plugins) using `empty_data` volumes
+> 2. Use a simple 2-3 map rotation
+> 3. Verify it works and appears in Kyber Launcher
+> 4. Once successful, create additional servers with mods/plugins
+>
+> This isolates any configuration issues and builds your confidence!
+
+---
+
+## Using the Example Files
+
+- The `.example` files in this repository serve as templates.
+- Copy them and remove the `.example` suffix:
+
+```bash
+  cp secrets.env.example secrets.env
+  cp vanilla.env.example vanilla.env
+```
+
+- Fill in your actual values (remember to remove `< >` brackets!)
+- The `.gitignore` file prevents committing your real `.env` files with credentials.
+
+---
+
+## Additional Resources
+
+- [Official KYBER Documentation](https://docs.kyber.gg/)
+- [KYBER Discord Community](https://discord.gg/kyber) - Get help from the community
+- [Docker Desktop Documentation](https://docs.docker.com/desktop/)
+- [Report issues with this guide](https://github.com/Geeknasty/KYBER-Windows-Hosting-Guide/issues)
+
+---
 
 ## License
 
