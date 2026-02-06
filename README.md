@@ -698,15 +698,6 @@ C:\KyberServers\logs\hvvchaos_server\
 > 2. Fix the issue in your `.env` files
 > 3. Restart: `docker-compose --env-file yourserver.env up -d`
 
-**Other issues:**
-
-| Problem | Solution |
-|---------|----------|
-| Container immediately exits | Check logs for Python errors; verify game files volume exists |
-| "Volume not found" error | Run `docker volume ls` to verify volume names, recreate if missing |
-| Can't connect to server in-game | Check firewall settings; verify ports not blocked |
-| Mods not loading | Confirm `MOD_VOLUME` name matches your actual mod volume |
-
 ### Stopping Your Server
 
 **Use Docker Desktop** Container tab
