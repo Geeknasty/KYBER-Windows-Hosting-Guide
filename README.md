@@ -415,8 +415,8 @@ PLUGIN_VOLUME=empty_data
 ```powershell
 docker-compose --env-file hvvchaos.env up -d
 ```
-
->**Note:** Use `-d` for detached (background) mode. Watch logs with `docker compose logs -f` or check on the running containers in docker-desktop.
+> [!NOTE]
+>Use `-d` for detached (background) mode. Watch logs with `docker compose logs -f` or check on the running containers in docker-desktop.
 > <details>
 > <summary>📸 <b>VIEW SCREENSHOT:</b> <code>Launching and Logs</code> (Click to expand)</summary>
 >
