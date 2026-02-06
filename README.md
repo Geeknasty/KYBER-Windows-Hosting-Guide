@@ -143,7 +143,15 @@ If you already have Star Wars Battlefront II installed locally (Steam, EA App/Or
    - **Direct Download:** [import-assets.ps1](https://raw.githubusercontent.com/Geeknasty/KYBER-Windows-Hosting-Guide/main/import-assets.ps1) (right-click → Save As)
    - Or clone this repo: `git clone https://github.com/Geeknasty/KYBER-Windows-Hosting-Guide.git`
    - Or [Download all files as ZIP](https://github.com/Geeknasty/KYBER-Windows-Hosting-Guide/archive/refs/heads/main.zip) extract the script.
-1. **Run it:** Right-click the `import-assets.ps1` file and select **Run with PowerShell**.
+1. **Run it:**
+   - **Method 1 (Simple):** Right-click the `import-assets.ps1` file and select **Run with PowerShell**.
+   - **Method 2 (If you get an execution policy error):**
+     1. Open PowerShell in the folder containing the script (Shift + Right-click in folder → "Open PowerShell window here")
+     2. Run: `PowerShell -ExecutionPolicy Bypass -File ./import-assets.ps1`
+
+   > [!NOTE]
+   > If you see a red error about "running scripts is disabled," use Method 2. This bypasses the restriction for this script only without changing your system settings.
+
 1. **Follow the Prompts:**
 
     - Select **Option 4** to import your Game Files first.
