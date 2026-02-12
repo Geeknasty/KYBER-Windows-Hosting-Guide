@@ -154,56 +154,24 @@ If you already have Star Wars Battlefront II installed locally (Steam, EA App/Or
 ### Option A: Use the KYBER Asset Importer (Recommended)
 
 1. **Download the Script:**
-   - **Direct Download:** [import-assets.ps1](https://raw.githubusercontent.com/Geeknasty/KYBER-Windows-Hosting-Guide/main/import-assets.ps1) (right-click → Save As)
+   - **Direct Download:** [Download all files as ZIP](https://github.com/Geeknasty/KYBER-Windows-Hosting-Guide/archive/refs/heads/main.zip) extract into a folder.
    - Or clone this repo: `git clone https://github.com/Geeknasty/KYBER-Windows-Hosting-Guide.git`
-   - Or [Download all files as ZIP](https://github.com/Geeknasty/KYBER-Windows-Hosting-Guide/archive/refs/heads/main.zip) extract the script.
 
 2. **Run it:**
 
-   > [!IMPORTANT]
-   > **Windows 11 Users:** The "Run with PowerShell" option may be hidden. Click "Show more options" at the bottom of the right-click menu to reveal it.
+   **Method 1 (Simplest - Just Double-Click):**
+   - Double-click the `import-assets.bat` file
+   - That's it! The script will launch automatically.
 
-   **Method 1 (Simple):**
-   - Right-click the `import-assets.ps1` file
-   - Select **Run with PowerShell**
-   - **Shortcut:** Hold `Ctrl + Shift` while clicking "Run with PowerShell" to run as administrator
+   **Method 2 (Right-click method):**
+   - Right-click the `import-assets.bat` file
+   - Select **Open** or **Run as administrator**
 
-   **Method 2 (If script flashes and closes immediately):**
-   1. Search for "PowerShell" in the Start menu
-   2. Right-click PowerShell → **Run as administrator**
-   3. Navigate to the script folder using `cd` command:
-      - Type `cd` followed by a space
-      - Copy the folder path from File Explorer's address bar (click the path at the top)
-      - Paste into PowerShell (right-click to paste)
-      - Press Enter
-   4. Run: `PowerShell -ExecutionPolicy Bypass -File ./import-assets.ps1`
-
-   **Method 3 (If you see "execution policy" error):**
-   1. Open PowerShell as administrator (see Method 2, steps 1-2)
-   2. Navigate to the script folder (see Method 2, step 3)
-   3. Run: `PowerShell -ExecutionPolicy Bypass -File ./import-assets.ps1`
-
-> [!NOTE]
-> **About Execution Policy Errors:**
-> If you see a red error about "running scripts is disabled," this is a Windows security feature. The `-ExecutionPolicy Bypass` command bypasses the restriction for this script only without permanently changing your system settings. This is the safest approach.
->
-> **Alternative (Not Recommended):** You can temporarily allow scripts with:
->
-> ```powershell
-> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-> ```
->
-> But remember to revert it after running the script for security:
->
-> ```powershell
-> Set-ExecutionPolicy -ExecutionPolicy Undefined -Scope CurrentUser
-> ```
-
-3. **Follow the Prompts:**
-
-   - Select **Option 4** to import your Game Files first.
-   - Select **Option 1** for your Mod `.tar` files.
-   - Select **Option 2** for your `.kbplugin` files.
+3. **Follow the interactive prompts:**
+   - Select what you want to import (Game Files, Mods, Plugins, or Modules)
+   - Drag and drop your files/folders into the terminal
+   - Choose or create a Docker volume name
+   - Wait for the import to complete
 
 > [!TIP]
 > **Understanding Docker Volume Names:**
