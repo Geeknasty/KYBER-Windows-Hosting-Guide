@@ -315,7 +315,7 @@ Example `docker run` method to launch a dedicated Kyber server.
 docker run `
   -e MAXIMA_CREDENTIALS='<EA-Username>:<password>' `
   -e KYBER_TOKEN=<token> `
-  -e KYBER_SERVER_NAME=<server-name> `
+  -e KYBER_SERVER_NAME='<server-name>' `
   -e KYBER_SERVER_MAX_PLAYERS=40 `
   -e KYBER_MAP_ROTATION='<base64-encoded‐map‐rotation>' `
   -e KYBER_MOD_FOLDER=/mnt/battlefront/mods `
