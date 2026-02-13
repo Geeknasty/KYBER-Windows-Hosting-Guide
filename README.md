@@ -328,7 +328,7 @@ docker run `
 
 > [!TIP]
 > The `docker run` command above is intended to be used with Powershell.
-> I've also included an example Windows batch file of the `docker run` command. See ***example-docker-run.bat***
+> I've also included an example Windows batch file of the `docker run` command. See **[example-docker-run.bat](example-docker-run.bat)**
 
 > [!NOTE]
 > Use `-d` for detached (background) mode. Remove `-it` and add `-d` to run in the background.
