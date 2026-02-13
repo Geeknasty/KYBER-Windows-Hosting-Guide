@@ -321,9 +321,18 @@ docker run `
   -e KYBER_MOD_FOLDER=/mnt/battlefront/mods `
   -v "<swbf2_data_volume>:/mnt/battlefront" `
   -v "<swbf2_mods_gamemode_volume>:/mnt/battlefront/mods" `
+  -v "./logs/:/root/.local/share/maxima/wine/prefix/drive_c/users/root/AppData/Roaming/ArmchairDevelopers/Kyber/Logs/" `
   -it `
   ghcr.io/armchairdevelopers/kyber-server:latest
 ```
+
+> [!TIP]
+> The `docker run` command above is intended to be used with Powershell.
+> I've also included an example Windows batch file of the `docker run` command. See ***example-docker-run.bat***
+
+> [!NOTE]
+> Use `-d` for detached (background) mode. Remove `-it` and add `-d` to run in the background.
+> Logs will be output to the `./logs/` folder in the same location as your script.
 
   <details>
   <summary>📸 <b>VIEW SCREENSHOT: <code>Environment Variables Reference Image</code> (Click to expand)</b></summary>
