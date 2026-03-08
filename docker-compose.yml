@@ -5,7 +5,6 @@ services:
     env_file:
       - secrets.env
     network_mode: "host"
-    privileged: true
     environment:
       - KYBER_SERVER_NAME=${SERVER_NAME:-}
       - KYBER_SERVER_PASSWORD=${SERVER_PASSWORD:-}
