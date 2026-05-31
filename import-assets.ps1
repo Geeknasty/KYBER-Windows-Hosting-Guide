@@ -21,6 +21,7 @@ if ($LASTEXITCODE -ne 0) {
     exit
 }
 Write-Host "Docker is running.`n" -ForegroundColor Green
+
 # --- 1. SETUP AND MENU ---
 Clear-Host
 Write-Host "==========================================" -ForegroundColor Cyan
@@ -36,10 +37,10 @@ Write-Host "------------------------------------------"
 $selection = Read-Host "Select an option"
 
 switch ($selection) {
-    "1" { $type = "MOD";    $needsFolder = $false; $validExt = ".tar"; $allowMultiple = $false }
-    "2" { $type = "PLUGIN"; $needsFolder = $false; $validExt = ".kbplugin"; $allowMultiple = $true }
-    "3" { $type = "MODULE"; $needsFolder = $true;  $validExt = $null; $allowMultiple = $false }
-    "4" { $type = "GAME";   $needsFolder = $true;  $validExt = $null; $allowMultiple = $false }
+    "1" { $type = "MOD";    $needsFolder = $false; $validExt = ".tar";      $allowMultiple = $false }
+    "2" { $type = "PLUGIN"; $needsFolder = $false; $validExt = ".kbplugin"; $allowMultiple = $true  }
+    "3" { $type = "MODULE"; $needsFolder = $true;  $validExt = $null;       $allowMultiple = $false }
+    "4" { $type = "GAME";   $needsFolder = $true;  $validExt = $null;       $allowMultiple = $false }
     "Q" { exit }
     Default { Write-Host "Invalid selection."; exit }
 }
@@ -51,20 +52,20 @@ if ($allowMultiple) {
     Write-Host "TIP: You can drag multiple files separated by spaces!" -ForegroundColor Cyan
 }
 
-$inputPath = (Read-Host "Enter path(s) (drag and drop here)")
+$inputPath = (Read-Host "Enter path(s) (drag and drop here)").Trim('"')
 
 $sourcePaths = @()
 if ($allowMultiple) {
     $pattern = '"([^"]+)"|(\S+)'
-    $regexMatches = [regex]::Matches($inputPath, $pattern)
-    
-    foreach ($match in $regexMatches) {
-        $cleanPath = if ($match.Groups[1].Success) { 
-            $match.Groups[1].Value 
-        } else { 
-            $match.Groups[2].Value 
+    $matches = [regex]::Matches($inputPath, $pattern)
+
+    foreach ($match in $matches) {
+        $cleanPath = if ($match.Groups[1].Success) {
+            $match.Groups[1].Value
+        } else {
+            $match.Groups[2].Value
         }
-        
+
         if ($cleanPath) {
             $sourcePaths += $cleanPath
         }
@@ -72,34 +73,17 @@ if ($allowMultiple) {
 } else {
     $sourcePaths = @($inputPath)
 }
-# ── Validate all paths actually exist ────────────────────────────────
 
-$invalidPaths = @()
-$validSourcePaths = @()
-
-foreach ($p in $sourcePaths) {
-    if (Test-Path $p) {
-        $validSourcePaths += $p
-    } else {
-        $invalidPaths += $p
-    }
-}
-
-$sourcePaths = $validSourcePaths
+# --- FIX: Populate $invalidPaths before checking it ---
+$invalidPaths = $sourcePaths | Where-Object { -not (Test-Path $_) }
 
 if ($invalidPaths.Count -gt 0) {
-    Write-Host "ERROR: The following path(s) do not exist:" -ForegroundColor Red
+    Write-Host "ERROR: The following path(s) not found:" -ForegroundColor Red
     $invalidPaths | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
-    Write-Host ""
-    exit 1
+    exit
 }
 
-if ($sourcePaths.Count -eq 0) {
-    Write-Host "ERROR: No valid paths were provided." -ForegroundColor Red
-    exit 1
-}
-
-Write-Host "`nFound $($sourcePaths.Count) valid file(s)/folder(s) to import." -ForegroundColor Green
+Write-Host "`nFound $($sourcePaths.Count) file(s) to import." -ForegroundColor Green
 
 # --- VALIDATE EACH FILE ---
 foreach ($sourcePath in $sourcePaths) {
@@ -111,38 +95,38 @@ foreach ($sourcePath in $sourcePaths) {
         $parentFolder = Split-Path $sourcePath -Parent
         Write-Host "`n[!] Option '$type' requires a folder, but you selected a file." -ForegroundColor Yellow
         $conf = Read-Host "Would you like to switch to parent directory: $parentFolder? (Y/n)"
-        
+
         if ($conf -eq "" -or $conf.ToLower() -eq "y") {
             $sourcePaths = @($parentFolder)
             break
         } else {
             Write-Host "Aborted." -ForegroundColor Red; exit
         }
-    } 
+    }
     elseif (-not $needsFolder -and $isActuallyFolder) {
         Write-Host "ERROR: Option '$type' requires a specific file ($validExt), but you provided a folder: $sourcePath" -ForegroundColor Red
         exit
     }
     elseif (-not $needsFolder -and -not $isActuallyFolder) {
         $currentExt = [System.IO.Path]::GetExtension($sourcePath)
-        
+
         # Special handling for MOD files - check if it's a tar without extension
         if ($type -eq "MOD" -and [string]::IsNullOrEmpty($currentExt)) {
             Write-Host "File has no extension. Checking if it's a valid tar archive..." -ForegroundColor Yellow
-            
+
             try {
                 $fileStream = [System.IO.File]::OpenRead($sourcePath)
                 $buffer = New-Object byte[] 512
                 $bytesRead = $fileStream.Read($buffer, 0, 512)
                 $fileStream.Close()
-                
+
                 if ($bytesRead -lt 262) {
                     Write-Host "ERROR: File is too small to be a valid tar archive." -ForegroundColor Red
                     exit
                 }
-                
+
                 $ustarSignature = [System.Text.Encoding]::ASCII.GetString($buffer[257..261])
-                
+
                 if ($ustarSignature -eq "ustar") {
                     Write-Host "SUCCESS: Valid tar archive detected (exported without extension)." -ForegroundColor Green
                 } else {
@@ -192,28 +176,35 @@ foreach ($sourcePath in $sourcePaths) {
     $fileName = Split-Path $sourcePath -Leaf
     Write-Host "`n[$($sourcePaths.IndexOf($sourcePath) + 1)/$($sourcePaths.Count)] Processing: $fileName" -ForegroundColor Cyan
 
+    # --- FIX: Wrap paths in escaped quotes to handle spaces in folder/file names ---
     if ($type -eq "MODULE" -or $type -eq "GAME") {
         Write-Host "Using RSYNC to sync files. Watch progress below:" -ForegroundColor Gray
         docker run --rm `
-            -v "${sourcePath}:/source" `
-            -v "${volName}:/dest" `
+            -v "`"${sourcePath}`":/source" `
+            -v "`"${volName}`":/dest" `
             alpine sh -c "apk add --no-cache rsync && rsync -ah --info=progress2 --no-inc-recursive /source/ /dest/"
     }
     elseif ($type -eq "MOD") {
         Write-Host "Extracting archive... Large mod collections (4GB+) may take a few minutes." -ForegroundColor Yellow
         Write-Host "Please do not close this window until you see SUCCESS." -ForegroundColor Gray
-        docker run --rm -v "${sourcePath}:/archive.tar" -v "${volName}:/dest" alpine tar -xf /archive.tar -C /dest
+        docker run --rm `
+            -v "`"${sourcePath}`":/archive.tar" `
+            -v "`"${volName}`":/dest" `
+            alpine tar -xf /archive.tar -C /dest
     }
     else {
         Write-Host "Copying plugin file..." -ForegroundColor Gray
-        docker run --rm -v "${sourcePath}:/source/$fileName" -v "${volName}:/dest" alpine cp "/source/$fileName" /dest/
+        docker run --rm `
+            -v "`"${sourcePath}`":/source/$fileName" `
+            -v "`"${volName}`":/dest" `
+            alpine cp "/source/$fileName" /dest/
     }
 
-    if ($?) { 
-        Write-Host "  ? SUCCESS: $fileName imported" -ForegroundColor Green
+    if ($?) {
+        Write-Host "  SUCCESS: $fileName imported" -ForegroundColor Green
         $successCount++
     } else {
-        Write-Host "  ? FAILED: $fileName" -ForegroundColor Red
+        Write-Host "  FAILED: $fileName" -ForegroundColor Red
         $failCount++
     }
 }
@@ -223,8 +214,8 @@ Write-Host "`n========================================" -ForegroundColor Cyan
 Write-Host "IMPORT SUMMARY" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Successful: $successCount" -ForegroundColor Green
-Write-Host "Failed: $failCount" -ForegroundColor Red
-Write-Host "Destination: $volName" -ForegroundColor Yellow
+Write-Host "Failed:     $failCount"    -ForegroundColor Red
+Write-Host "Destination: $volName"     -ForegroundColor Yellow
 Write-Host "========================================" -ForegroundColor Cyan
 
 if ($failCount -gt 0) {

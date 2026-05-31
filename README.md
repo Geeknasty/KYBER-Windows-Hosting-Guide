@@ -411,7 +411,6 @@ services:
     env_file:
       - secrets.env
     network_mode: "host"
-    privileged: true
     command: ["--module-branch=ver/beta10", "--module-path=/root/.local/share/kyber/module"]
     environment:
       - KYBER_SERVER_NAME=${SERVER_NAME:-}
