@@ -1,10 +1,13 @@
 <#
 .SYNOPSIS
-    v1.2 - KYBER Server Asset Importer
+    v1.3 - KYBER Server Asset Importer
+    - Added: .tar.gz and .tgz support for Mod Collection imports.
+    - Fixed: Extension validation handles double-extensions (.tar.gz) correctly.
+    - Auto-detects whether to use -xf or -xzf based on file extension.
     - Added: Multi-file import support for plugins (space-separated paths).
     - Fixed: Detection of .tar files without extensions (exported from mod tools).
     - Added: Feedback message for large MOD extraction to prevent user panic.
-    - Validates file extensions (.tar, .kbplugin).
+    - Validates file extensions (.tar, .tar.gz, .tgz, .kbplugin).
     - Interactive Y/n switch for parent folder detection.
     - Volume Discovery with "New Volume" clarification.
     - Rsync progress bars for Game Files and Modules.
@@ -25,9 +28,9 @@ Write-Host "Docker is running.`n" -ForegroundColor Green
 # --- 1. SETUP AND MENU ---
 Clear-Host
 Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "   KYBER Server Asset Importer (v1.2)     " -ForegroundColor Cyan
+Write-Host "   KYBER Server Asset Importer (v1.3)     " -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "1. Import Mod Collection (.tar)"
+Write-Host "1. Import Mod Collection (.tar / .tar.gz)"
 Write-Host "2. Import Plugin (.kbplugin) - Supports multiple files!"
 Write-Host "3. Import Kyber Module (Folder or Kyber.dll)"
 Write-Host "4. Import Game Files (Entire Folder)"
@@ -37,10 +40,10 @@ Write-Host "------------------------------------------"
 $selection = Read-Host "Select an option"
 
 switch ($selection) {
-    "1" { $type = "MOD";    $needsFolder = $false; $validExt = ".tar";      $allowMultiple = $false }
-    "2" { $type = "PLUGIN"; $needsFolder = $false; $validExt = ".kbplugin"; $allowMultiple = $true  }
-    "3" { $type = "MODULE"; $needsFolder = $true;  $validExt = $null;       $allowMultiple = $false }
-    "4" { $type = "GAME";   $needsFolder = $true;  $validExt = $null;       $allowMultiple = $false }
+    "1" { $type = "MOD";    $needsFolder = $false; $validExt = @(".tar", ".tar.gz", ".tgz"); $allowMultiple = $false }
+    "2" { $type = "PLUGIN"; $needsFolder = $false; $validExt = ".kbplugin";                  $allowMultiple = $true  }
+    "3" { $type = "MODULE"; $needsFolder = $true;  $validExt = $null;                        $allowMultiple = $false }
+    "4" { $type = "GAME";   $needsFolder = $true;  $validExt = $null;                        $allowMultiple = $false }
     "Q" { exit }
     Default { Write-Host "Invalid selection."; exit }
 }
@@ -104,39 +107,54 @@ foreach ($sourcePath in $sourcePaths) {
         }
     }
     elseif (-not $needsFolder -and $isActuallyFolder) {
-        Write-Host "ERROR: Option '$type' requires a specific file ($validExt), but you provided a folder: $sourcePath" -ForegroundColor Red
+        Write-Host "ERROR: Option '$type' requires a specific file, but you provided a folder: $sourcePath" -ForegroundColor Red
         exit
     }
     elseif (-not $needsFolder -and -not $isActuallyFolder) {
         $currentExt = [System.IO.Path]::GetExtension($sourcePath)
 
-        # Special handling for MOD files - check if it's a tar without extension
-        if ($type -eq "MOD" -and [string]::IsNullOrEmpty($currentExt)) {
-            Write-Host "File has no extension. Checking if it's a valid tar archive..." -ForegroundColor Yellow
+        # Special handling for MOD files
+        if ($type -eq "MOD") {
+            # Check for no extension - may be a tar exported without one
+            if ([string]::IsNullOrEmpty($currentExt)) {
+                Write-Host "File has no extension. Checking if it's a valid tar archive..." -ForegroundColor Yellow
 
-            try {
-                $fileStream = [System.IO.File]::OpenRead($sourcePath)
-                $buffer = New-Object byte[] 512
-                $bytesRead = $fileStream.Read($buffer, 0, 512)
-                $fileStream.Close()
+                try {
+                    $fileStream = [System.IO.File]::OpenRead($sourcePath)
+                    $buffer = New-Object byte[] 512
+                    $bytesRead = $fileStream.Read($buffer, 0, 512)
+                    $fileStream.Close()
 
-                if ($bytesRead -lt 262) {
-                    Write-Host "ERROR: File is too small to be a valid tar archive." -ForegroundColor Red
-                    exit
+                    if ($bytesRead -lt 262) {
+                        Write-Host "ERROR: File is too small to be a valid tar archive." -ForegroundColor Red
+                        exit
+                    }
+
+                    $ustarSignature = [System.Text.Encoding]::ASCII.GetString($buffer[257..261])
+
+                    if ($ustarSignature -eq "ustar") {
+                        Write-Host "SUCCESS: Valid tar archive detected (exported without extension)." -ForegroundColor Green
+                    } else {
+                        Write-Host "ERROR: File does not appear to be a valid tar archive." -ForegroundColor Red
+                        Write-Host "Expected tar signature not found. Please verify the file." -ForegroundColor Red
+                        exit
+                    }
                 }
-
-                $ustarSignature = [System.Text.Encoding]::ASCII.GetString($buffer[257..261])
-
-                if ($ustarSignature -eq "ustar") {
-                    Write-Host "SUCCESS: Valid tar archive detected (exported without extension)." -ForegroundColor Green
-                } else {
-                    Write-Host "ERROR: File does not appear to be a valid tar archive." -ForegroundColor Red
-                    Write-Host "Expected tar signature not found. Please verify the file." -ForegroundColor Red
+                catch {
+                    Write-Host "ERROR: Unable to read file for validation: $_" -ForegroundColor Red
                     exit
                 }
             }
-            catch {
-                Write-Host "ERROR: Unable to read file for validation: $_" -ForegroundColor Red
+            # .tar.gz and .tgz - GetExtension only returns .gz, so use regex match instead
+            elseif ($sourcePath -match '\.(tar\.gz|tgz)$') {
+                Write-Host "Detected gzip-compressed archive (.tar.gz / .tgz)." -ForegroundColor Green
+            }
+            # Plain .tar
+            elseif ($currentExt -eq ".tar") {
+                Write-Host "Detected plain tar archive (.tar)." -ForegroundColor Green
+            }
+            else {
+                Write-Host "ERROR: Invalid file type for '$sourcePath'! Expected .tar, .tar.gz, or .tgz but got $currentExt" -ForegroundColor Red
                 exit
             }
         }
@@ -176,7 +194,6 @@ foreach ($sourcePath in $sourcePaths) {
     $fileName = Split-Path $sourcePath -Leaf
     Write-Host "`n[$($sourcePaths.IndexOf($sourcePath) + 1)/$($sourcePaths.Count)] Processing: $fileName" -ForegroundColor Cyan
 
-    # --- FIX: Wrap paths in escaped quotes to handle spaces in folder/file names ---
     if ($type -eq "MODULE" -or $type -eq "GAME") {
         Write-Host "Using RSYNC to sync files. Watch progress below:" -ForegroundColor Gray
         docker run --rm `
@@ -185,12 +202,15 @@ foreach ($sourcePath in $sourcePaths) {
             alpine sh -c "apk add --no-cache rsync && rsync -ah --info=progress2 --no-inc-recursive /source/ /dest/"
     }
     elseif ($type -eq "MOD") {
+        # Auto-detect tar flags based on extension
+        $tarFlags = if ($sourcePath -match '\.(tar\.gz|tgz)$') { "-xzf" } else { "-xf" }
+
         Write-Host "Extracting archive... Large mod collections (4GB+) may take a few minutes." -ForegroundColor Yellow
         Write-Host "Please do not close this window until you see SUCCESS." -ForegroundColor Gray
         docker run --rm `
             -v "`"${sourcePath}`":/archive.tar" `
             -v "`"${volName}`":/dest" `
-            alpine tar -xf /archive.tar -C /dest
+            alpine tar $tarFlags /archive.tar -C /dest
     }
     else {
         Write-Host "Copying plugin file..." -ForegroundColor Gray
